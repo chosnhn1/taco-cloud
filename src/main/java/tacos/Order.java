@@ -1,5 +1,9 @@
 package tacos;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import org.hibernate.validator.constraints.CreditCardNumber;
 
 import jakarta.validation.constraints.Digits;
@@ -9,6 +13,9 @@ import lombok.Data;
 
 @Data
 public class Order {
+
+    private Long id;
+    private Date placedAt;
 
     @NotBlank(message = "Name is required")
     private String deliveryName;
@@ -33,4 +40,13 @@ public class Order {
 
     @Digits(integer = 3, fraction = 0, message = "Invalid CVV")
     private String ccCVV;
+
+
+    // 주문에 담을 Taco들
+    private List<Taco> tacos = new ArrayList<>();
+
+    public void addDesign(Taco design) {
+        this.tacos.add(design);
+    }
+
 }
