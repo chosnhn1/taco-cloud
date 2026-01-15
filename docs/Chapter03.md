@@ -139,8 +139,38 @@ private Ingredient mapRowToIngredient(ResultSet rs, int rowNum) throws SQLExcept
   * 예시: [IngredientByIdConverter](/src/main/java/tacos/web/IngredientByIdConverter.java)
 
 * (글쎄... `KeyHolder.getKey() is null`이 발생한다 - 왜일까)
+* (해결 완료: 코드 참조)
 * 6판은 전혀 다르게 구현한다 - 살펴봐야겠다
 
+## 3.2 스프링 데이터 JPA를 사용해서 데이터 저장하고 사용하기
+
+* Spring Data JPA
+* Spring Data MongoDB
+* Spring Data Neo4
+* Spring Data Redis
+* Spring Data Cassandra
+
+### 3.2.1 스프링 데이터 JPA를 프로젝트에 추가하기
+
+* [의존성 수정](/pom.xml)
+* Spring Data JPA는 기본적으로 구현체인 Hibernate도 포함
+  * 다른 걸 쓰고 싶다면 Hibernate를 제외하고 해당 라이브러리를 추가할 것 (e.g. EclipseLInk)
+
+### 3.2.2 도메인 객체에 애너테이션 추가하기
+
+* `@Entity`, `@Id`
+* `@NoArgsConstructor` (JPA에서는 개체가 인자 없는 생성자를 가져야 함)
+
+### 3.2.4 JPA 리퍼지터리 커스터마이징하기
+
+```java
+// 이게 필요하다고 하자
+List<Order> findByDeliveryZip(String deliveryZip);
+```
+
+* Spring Data의 메서드 분석
+* e.g. `readOrdersByDeliveryZipAndPlacedAtBetween()`:
+  * 
 
 ## 요약
 
