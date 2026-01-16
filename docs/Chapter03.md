@@ -171,7 +171,12 @@ List<Order> findByDeliveryZip(String deliveryZip);
 * Spring Data의 메서드 분석
 * e.g. `readOrdersByDeliveryZipAndPlacedAtBetween()`:
   * 
+* 커스텀 쿼리 w/ `@Query` annotationo 
 
+```java
+@Query("Order o where o.delivertyCity='Seattle'")
+List<Order> readOrdersDeliveredInSeattle();
+```
 ## 요약
 
 * 용이한 JDBC 작업을 위한 JdbcTemplate
