@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### part of the docs
+
+/docs/Chapter*.md
+/docs/Edition6*.md

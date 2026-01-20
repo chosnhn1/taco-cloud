@@ -334,6 +334,11 @@ protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 
 #### 사용자 명세 서비스 생성하기
 
+* `UserDetailsService` interface
+  * `String username`
+    * -> `UserDetails`
+    * 또는... `UsernameNotFoundException`
+
 ```java
 // Spring Security의 UserDetailsService 인터페이스
 public interface UserDetailsService {
