@@ -313,11 +313,208 @@ spring:
             scope: <comma-separated list of requested scopes>
 ```
 
+* with OAuth API...
+
+```java
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    return http
+        .authorizeRequests()
+            .mvcMatchers("/design", "/orders").hasRole("USER")
+            .anyRequest().permitAll()
+        .and()
+            .formLogin()
+                .loginPage("/login")
+        .and()
+            .oauth2Login()
+        // ...
+        .and()
+        .build();
+}
+```
+
+```html
+<a th:href="/oauth2/authorization/facebook">Sign in with Facebook</a>
+```
+
 ### 5.3.4 Preventing cross-site request forgery
+
+* Cross-site request forgery (CSRF)
+* (뭔지 익숙하지만 한번 더)
+  * User -> Forged site -> false request
+  * prevent: Genuine site gives user a CSRF token, checks it when posted
+
+* Spring Security: built-in protection / easy implementation
+
+```html
+<input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+```
+
+* Using JSP tag library or Thymeleaf: even this is not necessary
+  * Thymeleaf: `<form>` with thymeleaf attribute: applied automatically
+
+* If you (somehow) doesn't want CSRF support:
+
+```java
+    .and()
+        .csrf()
+            .disable()
+    // ...
+```
 
 ## 5.4 Applying method-level security
 
+* Web-request level Security
+* but sometimes verifying user in method-level comes in handy
+
+* example: "clear all orders" method for management purpose 
+
+```java
+public void deleteAllOrders() {
+    orderRepository.deleteAll();
+}
+```
+
+```java
+@Controller
+@RequestMapping("/admin")
+public class AdminController {
+    private OrderAdminService adminService;
+
+    public AdminController(OrderAdminService adminService) {
+        this.adminService = adminService;
+    }
+
+    @PostMapping("/deleteOrders")
+    public String deleteAllOrders() {
+        adminService.deleteAllOrders();
+        return "redirect:/admin";
+    }
+}
+```
+
+* using SecurityConfig for this:
+
+```java
+    .authorizeRequests()
+        // ...
+        .antMatchers(HttpMethod.POST, "/admin/**")
+            .access("hasRole('ADMIN')")
+```
+
+* But what if some other controllers also use `deleteAllOrders()`?
+  * secure all matchers
+  * , or, how about this?
+
+```java
+@PreAuthorize("hasRole('ADMIN')")   // PreAuthorize takes SpEL
+public void deleteAllOrders() {     // SpEL -> true -> allow to evoke method
+    orderRepository.deleteAll();
+}
+```
+
+* to use `@PreAuthorize` it should be configured
+
+```java
+@Configuration
+@EnableGlobalMethodSecurity   // <--
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    //...
+}
+```
+
+* `@PostAuthorize`: works almost same as `@PreAuthorize` 
+  * but expression will be evaluate after method is evoked and returns
+  * , which returned value can be used whether to permit the method (!)
+
+* example: method fetches an order by order id
+  * who can call this?: ADMIN, and USER who has this order
+
+```java
+@PostAuthorize("hasRole('ADMIN') || " +
+    "returnObject.user.username == authentication.name")    // <--
+public TacoOrder getOrder(long id) {
+    // ...
+}
+```
+
 ## 5.5 Knowing your user
+
+* It's important to know who the users of the application are: *tailor UX*
+
+* e.g. prepopulating TacoOrder with User info
+  * (e-커머스라면 '기본배송지' 같은 기능들)
+* "User - other entities" relations
+
+* (참고: 5판은 `Order`를 쓰지만 6판은 `TacoOrder`로 정의한다)
+
+```java
+@Data
+@Entity
+@Table(name="Taco_Order")
+public class TacoOrder implements Serializable {
+
+    // User와의 M-1 관계
+    @ManyToOne
+    private User user;
+
+}
+```
+
+* `processOrder()` in `OrderController`: save TacoOrder, so should determine who is user
+
+* the way to determine who is the user:
+  * Inject `java.security.Principal` into ctrlr method
+  * Inject `org.springframework.core.Authentication` into ctrlr method
+  * Use `...core.context.SecurityContextHolder` to get security context
+  * Inject `@AuthenticationPrincipal` annotated method param
+
+* example:
+  * #1: works fine, but unrelated codes to security
+  * #2: also works fine, but casting
+  * #3: more feasible approach
+
+```java
+// e.g. 1
+@PostMapping
+public String processOrder(@Valid TacoOrder order, Errors errors, SessionStatus sessionStatus, Principal principal) {
+    // ...
+    User user = userRepository.findByUsername(principal.getName());
+    order.setUser(user);
+    // ...
+}
+```
+
+```java
+// e.g. 2
+@PostMapping
+public String processOrder(@Valid TacoOrder order, Errors errors, SessionStatus sessionStatus, Authentication authentication) {
+    // ...
+    User user = (User) authentication.getPrincipal();
+    order.setUser(user);
+    // ...
+}
+```
+
+```java
+@PostMapping
+public String processOrder(@Valid TacoOrder order, Errors errors, SessionStatus sessionStatus, @AuthenticationPrincipal User user) {
+    // ...
+    order.setUser(user);
+    // ...
+}
+```
+
+* What's nice:
+  * cast not required
+  * limits securitiy-specific code to annotation
+
+```java
+// 이것도 가능은 하다 (messy, security-specifically thick)
+// good for: used anywhere, suitable for use in lower level of the code
+Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+User user = (User) authentication.getPrincipal();
+```
 
 ## Summary
 

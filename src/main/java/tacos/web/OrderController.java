@@ -1,8 +1,10 @@
 package tacos.web;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.SessionAttributes;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.support.SessionStatus;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import tacos.Order;
+import tacos.User;
 import tacos.data.OrderRepository;
 
 @Slf4j
@@ -26,18 +29,42 @@ public class OrderController {
     }
 
     @GetMapping("/current")
-    public String orderForm() {
+    public String orderForm(@AuthenticationPrincipal User user, @ModelAttribute Order order) {
+
+        if (order.getDeliveryName() == null ) {
+            order.setDeliveryName(user.getFullname());
+        }
+        if (order.getDeliveryStreet() == null ) {
+            order.setDeliveryStreet(user.getStreet());
+        }
+        if (order.getDeliveryCity() == null ) {
+            order.setDeliveryCity(user.getCity());
+        }
+        if (order.getDeliveryState() == null ) {
+            order.setDeliveryState(user.getState());
+        }
+        if (order.getDeliveryZip() == null ) {
+            order.setDeliveryZip(user.getZip());
+        }
+
+
         // model.addAttribute("order", new Order());
         return "orderForm";
     }
 
     @PostMapping
-    public String processOrder(@Valid Order order, Errors errors, SessionStatus sessionStatus) {
+    public String processOrder(
+        @Valid Order order,
+        Errors errors,
+        SessionStatus sessionStatus,
+        @AuthenticationPrincipal User user
+    ) {
         if (errors.hasErrors()) {
             return "orderForm";
         }
 
-        // log.info("Order submitted: " + order);
+        order.setUser(user);
+        
         orderRepo.save(order);
 
         // 세션 정리: 주문에 필요한 Taco들이 전부 작성되었으므로 세션을 재설정한다

@@ -40,10 +40,11 @@ public class SecurityConfig {
                 // .usernameParameter("user")
                 // .passwordParameter("pwd")
                 .defaultSuccessUrl("/design", true)
+            ).logout(logout -> logout
+                .logoutSuccessUrl("/")
             );
         
         return http.build();
 
     }
-
 }

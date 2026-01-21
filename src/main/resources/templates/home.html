@@ -11,5 +11,9 @@
 <body>
   <h1>Welcome to...</h1>
   <img alt="TacoCloud" th:src="@{/images/TacoCloud.png}" />
+  <form th:action="@{/logout}" id="logoutForm" method="post">
+    <input type="submit" value="Logout"/>
+  </form>
+  <a th:href="@{/design}" id="design">Design a taco</a>
 </body>
 </html>
