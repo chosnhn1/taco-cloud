@@ -34,5 +34,5 @@ build/
 
 ### part of the docs
 
-/docs/Chapter*.md
-/docs/Edition6*.md
+# /docs/Chapter*.md
+# /docs/Edition6*.md

@@ -8,10 +8,6 @@ import org.springframework.context.annotation.Bean;
 import tacos.Ingredient.Type;
 import tacos.data.IngredientRepository;
 
-/**
- * 
- * 
- */
 @SpringBootApplication
 public class TacoCloudApplication {
 
